@@ -2,8 +2,10 @@ package fit.g20202.tsarev.DISLabSBWorker;
 
 import fit.g20202.tsarev.DISLabSBWorker.DTO.ResponseFromManagerDTO;
 import fit.g20202.tsarev.DISLabSBWorker.DTO.ResultsToManagerDTO;
-import fit.g20202.tsarev.DISLabSBWorker.DTO.TaskFromManagerDTO;
+import fit.g20202.tsarev.DISLabSBWorker.DTO.TaskForWorkerDTO;
 import org.paukov.combinatorics3.Generator;
+import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,9 @@ import java.util.concurrent.Executors;
 
 @Service
 public class WorkerService {
+
+    @Autowired
+    AmqpTemplate amqpTemplate;
 
     ExecutorService threadPool;
     List<String> alphabet;
@@ -36,7 +41,7 @@ public class WorkerService {
 
     }
 
-    public void startCrack(TaskFromManagerDTO task){
+    public void startCrack(TaskForWorkerDTO task){
         threadPool.submit(() -> {
             crackHash(
                     task.requestId(),
@@ -93,23 +98,9 @@ public class WorkerService {
 
         System.out.println("Worker finished");
 
-        // send request to the worker
-        RestTemplate restTemplate = new RestTemplate();
-
-        // PATCH fix
-        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
-        restTemplate.setRequestFactory(factory);
-
-        HttpEntity<ResultsToManagerDTO> request = new HttpEntity<>(new ResultsToManagerDTO(
+        amqpTemplate.convertAndSend("exchange", "managerKey", new ResultsToManagerDTO(
                 requestId, result
         ));
-
-        ResponseFromManagerDTO response =
-                restTemplate.patchForObject(
-                        //"http://localhost:8080/internal/api/manager/hash/crack/request",
-                        "http://manager:8080/internal/api/manager/hash/crack/request",
-                        request,
-                        ResponseFromManagerDTO.class);
 
     }
 
