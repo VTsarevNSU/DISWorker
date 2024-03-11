@@ -19,7 +19,10 @@ public class RabbitConfiguration {
 
     @Bean
     public ConnectionFactory connectionFactory() {
-        return new CachingConnectionFactory("localhost");
+        CachingConnectionFactory cachingConnectionFactory = new CachingConnectionFactory("rabbitmq");
+        cachingConnectionFactory.setUsername("user");
+        cachingConnectionFactory.setPassword("password");
+        return cachingConnectionFactory;
     }
 
     @Bean
