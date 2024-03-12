@@ -1,16 +1,14 @@
 package fit.g20202.tsarev.DISLabSBWorker;
 
-import fit.g20202.tsarev.DISLabSBWorker.DTO.ResponseFromManagerDTO;
+import com.rabbitmq.client.Channel;
 import fit.g20202.tsarev.DISLabSBWorker.DTO.ResultsToManagerDTO;
 import fit.g20202.tsarev.DISLabSBWorker.DTO.TaskForWorkerDTO;
 import org.paukov.combinatorics3.Generator;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -41,7 +39,7 @@ public class WorkerService {
 
     }
 
-    public void startCrack(TaskForWorkerDTO task){
+    public void startCrack(TaskForWorkerDTO task, Channel channel, long tag){
         threadPool.submit(() -> {
             crackHash(
                     task.requestId(),
@@ -49,13 +47,14 @@ public class WorkerService {
                     Integer.parseInt(task.firstSymbolPos()),
                     Integer.parseInt(task.lastSymbolPos()),
                     Integer.parseInt(task.maxLength()),
-                    Integer.parseInt(task.part())
+                    Integer.parseInt(task.part()),
+                    channel, tag
             );
         });
     }
 
     public void crackHash(String requestId, String target, Integer startSymbolPos, Integer endSymbolPos, Integer maxLength,
-                          Integer part){
+                          Integer part, Channel channel, long tag){
 
         List<String> result = new ArrayList<String>();
 
@@ -103,6 +102,12 @@ public class WorkerService {
         amqpTemplate.convertAndSend("exchange", "managerKey", new ResultsToManagerDTO(
                 requestId, result, part
         ));
+
+        try {
+            channel.basicAck(tag, false);
+        } catch (IOException e) {
+            //throw new RuntimeException(e);
+        }
 
     }
 
