@@ -48,12 +48,14 @@ public class WorkerService {
                     task.hash(),
                     Integer.parseInt(task.firstSymbolPos()),
                     Integer.parseInt(task.lastSymbolPos()),
-                    Integer.parseInt(task.maxLength())
+                    Integer.parseInt(task.maxLength()),
+                    Integer.parseInt(task.part())
             );
         });
     }
 
-    public void crackHash(String requestId, String target, Integer startSymbolPos, Integer endSymbolPos, Integer maxLength){
+    public void crackHash(String requestId, String target, Integer startSymbolPos, Integer endSymbolPos, Integer maxLength,
+                          Integer part){
 
         List<String> result = new ArrayList<String>();
 
@@ -99,7 +101,7 @@ public class WorkerService {
         System.out.println("Worker finished");
 
         amqpTemplate.convertAndSend("exchange", "managerKey", new ResultsToManagerDTO(
-                requestId, result
+                requestId, result, part
         ));
 
     }

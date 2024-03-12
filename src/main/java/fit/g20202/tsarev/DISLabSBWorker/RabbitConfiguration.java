@@ -1,10 +1,8 @@
 package fit.g20202.tsarev.DISLabSBWorker;
 
-import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.core.MessageListener;
-import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
@@ -25,6 +23,16 @@ public class RabbitConfiguration {
         return cachingConnectionFactory;
     }
 
+    /*@Bean
+    public SimpleRabbitListenerContainerFactory myRabbitListenerContainerFactory() {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory());
+        factory.setMaxConcurrentConsumers(5);
+        //factory.setMessageConverter((MessageConverter) jackson2Converter());
+        factory.setAcknowledgeMode(AcknowledgeMode.MANUAL);
+        return factory;
+    }*/
+
     @Bean
     public AmqpAdmin amqpAdmin() {
         return new RabbitAdmin(connectionFactory());
@@ -38,7 +46,7 @@ public class RabbitConfiguration {
     }
 
     @Bean
-    public Queue queue() {
+    public Queue workerQueue() {
         return new Queue("worker_queue");
     }
 
