@@ -39,22 +39,30 @@ public class WorkerService {
 
     }
 
-    public void startCrack(TaskForWorkerDTO task, Channel channel, long tag){
+    public void startCrack(TaskForWorkerDTO task, Channel channel, long tag) throws Exception {
         threadPool.submit(() -> {
-            crackHash(
-                    task.requestId(),
-                    task.hash(),
-                    Integer.parseInt(task.firstSymbolPos()),
-                    Integer.parseInt(task.lastSymbolPos()),
-                    Integer.parseInt(task.maxLength()),
-                    Integer.parseInt(task.part()),
-                    channel, tag
-            );
+            try {
+                crackHash(
+                        task.requestId(),
+                        task.hash(),
+                        Integer.parseInt(task.firstSymbolPos()),
+                        Integer.parseInt(task.lastSymbolPos()),
+                        Integer.parseInt(task.maxLength()),
+                        Integer.parseInt(task.part()),
+                        channel, tag
+                );
+            } catch (Exception e) {
+                try {
+                    channel.basicNack(tag, false, true);
+                } catch (Exception ee){
+
+                }
+            }
         });
     }
 
     public void crackHash(String requestId, String target, Integer startSymbolPos, Integer endSymbolPos, Integer maxLength,
-                          Integer part, Channel channel, long tag){
+                          Integer part, Channel channel, long tag) throws Exception{
 
         List<String> result = new ArrayList<String>();
 
@@ -103,11 +111,7 @@ public class WorkerService {
                 requestId, result, part
         ));
 
-        try {
-            channel.basicAck(tag, false);
-        } catch (IOException e) {
-            //throw new RuntimeException(e);
-        }
+        channel.basicAck(tag, false);
 
     }
 

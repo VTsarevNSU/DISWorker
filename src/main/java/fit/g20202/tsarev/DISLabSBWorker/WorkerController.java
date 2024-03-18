@@ -24,7 +24,11 @@ public class WorkerController {
             Channel channel,
             @Header(AmqpHeaders.DELIVERY_TAG) long tag
     ) throws IOException {
-        service.startCrack(task, channel, tag);
+        try {
+            service.startCrack(task, channel, tag);
+        } catch (Exception e){
+            channel.basicNack(tag, false, true);
+        }
     }
 
 }
